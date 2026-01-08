@@ -1,0 +1,71 @@
+{
+  "name": "@qontinui/design-tokens",
+  "version": "1.0.0",
+  "description": "Shared design tokens for Qontinui applications",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./css": "./dist/tokens.css",
+    "./tailwind": {
+      "types": "./dist/tailwind.d.ts",
+      "import": "./dist/tailwind.js",
+      "require": "./dist/tailwind.cjs"
+    },
+    "./tailwind-preset": {
+      "types": "./dist/tailwind-preset.d.ts",
+      "import": "./dist/tailwind-preset.js",
+      "require": "./dist/tailwind-preset.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build",
+    "release": "npm run build && npm publish --access public"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "tailwindcss": ">=3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "tailwindcss": {
+      "optional": true
+    }
+  },
+  "keywords": [
+    "qontinui",
+    "design-tokens",
+    "tailwind",
+    "colors",
+    "css-variables",
+    "design-system"
+  ],
+  "license": "MIT",
+  "author": "Joshua Spinak",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/qontinui/qontinui-design-tokens"
+  },
+  "bugs": {
+    "url": "https://github.com/qontinui/qontinui-design-tokens/issues"
+  },
+  "homepage": "https://github.com/qontinui/qontinui-design-tokens#readme"
+}
