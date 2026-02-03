@@ -39,8 +39,11 @@
     "registry": "https://registry.npmjs.org/"
   },
   "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "eslint": "^9.0.0",
     "tsup": "^8.0.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "typescript-eslint": "^8.53.1"
   },
   "peerDependencies": {
     "tailwindcss": ">=3.0.0"
