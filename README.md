@@ -38,7 +38,7 @@ Import the CSS file to get all tokens as CSS custom properties:
 
 ```css
 /* In your CSS file */
-@import '@qontinui/design-tokens/css';
+@import "@qontinui/design-tokens/css";
 
 /* Then use the variables */
 .my-element {
@@ -52,7 +52,7 @@ Import the CSS file to get all tokens as CSS custom properties:
 
 ```js
 // tailwind.config.js
-import { tailwindColors } from '@qontinui/design-tokens/tailwind';
+import { tailwindColors } from "@qontinui/design-tokens/tailwind";
 
 export default {
   theme: {
@@ -68,7 +68,7 @@ export default {
 Then in your CSS, import the tokens:
 
 ```css
-@import '@qontinui/design-tokens/css';
+@import "@qontinui/design-tokens/css";
 
 @tailwind base;
 @tailwind components;
@@ -95,7 +95,7 @@ Then in your CSS, import the tokens:
 ### TypeScript/JavaScript
 
 ```ts
-import { colors, brand, surface, border, text } from '@qontinui/design-tokens';
+import { colors, brand, surface, border, text } from "@qontinui/design-tokens";
 
 // Access individual tokens
 console.log(brand.primary); // "#4A90D9"
@@ -105,42 +105,47 @@ console.log(surface.canvas); // "#111115"
 ## Color Palette
 
 ### Brand Colors
-| Token | Value | Usage |
-|-------|-------|-------|
-| `brand-primary` | `#4A90D9` | Primary actions, links, focus states |
-| `brand-secondary` | `#8B6BB5` | Secondary actions, build mode |
-| `brand-success` | `#4DB89D` | Success states, positive actions |
+
+| Token             | Value     | Usage                                |
+| ----------------- | --------- | ------------------------------------ |
+| `brand-primary`   | `#4A90D9` | Primary actions, links, focus states |
+| `brand-secondary` | `#8B6BB5` | Secondary actions, build mode        |
+| `brand-success`   | `#4DB89D` | Success states, positive actions     |
 
 ### Surface Colors
-| Token | Value | Usage |
-|-------|-------|-------|
-| `surface-canvas` | `#111115` | Main background |
+
+| Token            | Value     | Usage                            |
+| ---------------- | --------- | -------------------------------- |
+| `surface-canvas` | `#111115` | Main background                  |
 | `surface-raised` | `#1E1E22` | Cards, panels, elevated surfaces |
-| `surface-hover` | `#252529` | Hover state |
-| `surface-active` | `#2C2C32` | Active/pressed state |
+| `surface-hover`  | `#252529` | Hover state                      |
+| `surface-active` | `#2C2C32` | Active/pressed state             |
 
 ### Border Colors
-| Token | Value | Usage |
-|-------|-------|-------|
-| `border-subtle` | `#2A2A30` | Subtle separation |
-| `border-default` | `#3A3A42` | Standard borders |
-| `border-strong` | `#4A4A54` | Emphasis, focus |
-| `border-interactive` | `#5A5A66` | Hover states |
+
+| Token                | Value     | Usage             |
+| -------------------- | --------- | ----------------- |
+| `border-subtle`      | `#2A2A30` | Subtle separation |
+| `border-default`     | `#3A3A42` | Standard borders  |
+| `border-strong`      | `#4A4A54` | Emphasis, focus   |
+| `border-interactive` | `#5A5A66` | Hover states      |
 
 ### Text Colors
-| Token | Value | Usage |
-|-------|-------|-------|
-| `text-primary` | `#FFFFFF` | Headings, important content |
-| `text-secondary` | `#B4B4B4` | Body content |
-| `text-muted` | `#8A8A8A` | Labels, hints, disabled |
+
+| Token            | Value     | Usage                       |
+| ---------------- | --------- | --------------------------- |
+| `text-primary`   | `#FFFFFF` | Headings, important content |
+| `text-secondary` | `#B4B4B4` | Body content                |
+| `text-muted`     | `#8A8A8A` | Labels, hints, disabled     |
 
 ### Semantic Colors
-| Token | Value | Usage |
-|-------|-------|-------|
+
+| Token     | Value     | Usage          |
+| --------- | --------- | -------------- |
 | `success` | `#4DB89D` | Success states |
 | `warning` | `#E5A853` | Warning states |
-| `error` | `#E5534B` | Error states |
-| `info` | `#4A90D9` | Info states |
+| `error`   | `#E5534B` | Error states   |
+| `info`    | `#4A90D9` | Info states    |
 
 ## Development Workflow
 
@@ -190,12 +195,12 @@ qontinui-design-tokens/
 
 ## Exports
 
-| Export | Description |
-|--------|-------------|
-| `@qontinui/design-tokens` | Main entry - color constants |
-| `@qontinui/design-tokens/css` | CSS custom properties |
-| `@qontinui/design-tokens/tailwind` | Tailwind color config |
-| `@qontinui/design-tokens/tailwind-preset` | Full Tailwind preset |
+| Export                                    | Description                  |
+| ----------------------------------------- | ---------------------------- |
+| `@qontinui/design-tokens`                 | Main entry - color constants |
+| `@qontinui/design-tokens/css`             | CSS custom properties        |
+| `@qontinui/design-tokens/tailwind`        | Tailwind color config        |
+| `@qontinui/design-tokens/tailwind-preset` | Full Tailwind preset         |
 
 ## License
 

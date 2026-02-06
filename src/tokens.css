@@ -14,44 +14,44 @@
   /* ===========================================
    * Brand Colors
    * =========================================== */
-  --qontinui-brand-primary: #4A90D9;
-  --qontinui-brand-secondary: #8B6BB5;
-  --qontinui-brand-success: #4DB89D;
+  --qontinui-brand-primary: #4a90d9;
+  --qontinui-brand-secondary: #8b6bb5;
+  --qontinui-brand-success: #4db89d;
 
   /* ===========================================
    * Surface Colors (Backgrounds)
    * =========================================== */
   --qontinui-surface-canvas: #111115;
-  --qontinui-surface-raised: #1E1E22;
+  --qontinui-surface-raised: #1e1e22;
   --qontinui-surface-hover: #252529;
-  --qontinui-surface-active: #2C2C32;
+  --qontinui-surface-active: #2c2c32;
 
   /* ===========================================
    * Border Colors
    * =========================================== */
-  --qontinui-border-subtle: #2A2A30;
-  --qontinui-border-default: #3A3A42;
-  --qontinui-border-strong: #4A4A54;
-  --qontinui-border-interactive: #5A5A66;
+  --qontinui-border-subtle: #2a2a30;
+  --qontinui-border-default: #3a3a42;
+  --qontinui-border-strong: #4a4a54;
+  --qontinui-border-interactive: #5a5a66;
 
   /* ===========================================
    * Text Colors
    * =========================================== */
-  --qontinui-text-primary: #FFFFFF;
-  --qontinui-text-secondary: #B4B4B4;
-  --qontinui-text-muted: #8A8A8A;
+  --qontinui-text-primary: #ffffff;
+  --qontinui-text-secondary: #b4b4b4;
+  --qontinui-text-muted: #8a8a8a;
   --qontinui-text-inverse: #111115;
 
   /* ===========================================
    * Semantic Colors
    * =========================================== */
-  --qontinui-success: #4DB89D;
+  --qontinui-success: #4db89d;
   --qontinui-success-muted: rgba(77, 184, 157, 0.15);
-  --qontinui-warning: #E5A853;
+  --qontinui-warning: #e5a853;
   --qontinui-warning-muted: rgba(229, 168, 83, 0.15);
-  --qontinui-error: #E5534B;
+  --qontinui-error: #e5534b;
   --qontinui-error-muted: rgba(229, 83, 75, 0.15);
-  --qontinui-info: #4A90D9;
+  --qontinui-info: #4a90d9;
   --qontinui-info-muted: rgba(74, 144, 217, 0.15);
 
   /* ===========================================
@@ -64,32 +64,32 @@
 
 /* Dark mode - same values (already optimized for dark) */
 .dark {
-  --qontinui-brand-primary: #4A90D9;
-  --qontinui-brand-secondary: #8B6BB5;
-  --qontinui-brand-success: #4DB89D;
+  --qontinui-brand-primary: #4a90d9;
+  --qontinui-brand-secondary: #8b6bb5;
+  --qontinui-brand-success: #4db89d;
 
   --qontinui-surface-canvas: #111115;
-  --qontinui-surface-raised: #1E1E22;
+  --qontinui-surface-raised: #1e1e22;
   --qontinui-surface-hover: #252529;
-  --qontinui-surface-active: #2C2C32;
+  --qontinui-surface-active: #2c2c32;
 
-  --qontinui-border-subtle: #2A2A30;
-  --qontinui-border-default: #3A3A42;
-  --qontinui-border-strong: #4A4A54;
-  --qontinui-border-interactive: #5A5A66;
+  --qontinui-border-subtle: #2a2a30;
+  --qontinui-border-default: #3a3a42;
+  --qontinui-border-strong: #4a4a54;
+  --qontinui-border-interactive: #5a5a66;
 
-  --qontinui-text-primary: #FFFFFF;
-  --qontinui-text-secondary: #B4B4B4;
-  --qontinui-text-muted: #8A8A8A;
+  --qontinui-text-primary: #ffffff;
+  --qontinui-text-secondary: #b4b4b4;
+  --qontinui-text-muted: #8a8a8a;
   --qontinui-text-inverse: #111115;
 
-  --qontinui-success: #4DB89D;
+  --qontinui-success: #4db89d;
   --qontinui-success-muted: rgba(77, 184, 157, 0.15);
-  --qontinui-warning: #E5A853;
+  --qontinui-warning: #e5a853;
   --qontinui-warning-muted: rgba(229, 168, 83, 0.15);
-  --qontinui-error: #E5534B;
+  --qontinui-error: #e5534b;
   --qontinui-error-muted: rgba(229, 83, 75, 0.15);
-  --qontinui-info: #4A90D9;
+  --qontinui-info: #4a90d9;
   --qontinui-info-muted: rgba(74, 144, 217, 0.15);
 
   --qontinui-glow-primary: rgba(74, 144, 217, 0.2);
