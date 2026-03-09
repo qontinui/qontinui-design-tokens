@@ -39,6 +39,13 @@ export const tailwindColors = {
     active: "var(--qontinui-surface-active)",
   },
 
+  // Background aliases (shared workflow-ui components use bg-bg-*)
+  bg: {
+    primary: "var(--qontinui-surface-canvas)",
+    secondary: "var(--qontinui-surface-raised)",
+    tertiary: "var(--qontinui-surface-hover)",
+  },
+
   // Border colors (using 'border-' prefix causes conflicts, use 'border-ds')
   "border-ds": {
     subtle: "var(--qontinui-border-subtle)",
