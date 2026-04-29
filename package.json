@@ -61,7 +61,7 @@
     "css-variables",
     "design-system"
   ],
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "author": "Joshua Spinak",
   "repository": {
     "type": "git",
