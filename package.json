@@ -1,6 +1,6 @@
 {
   "name": "@qontinui/design-tokens",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Shared design tokens for Qontinui applications",
   "type": "module",
   "main": "./dist/index.js",
@@ -13,6 +13,7 @@
       "require": "./dist/index.cjs"
     },
     "./css": "./dist/tokens.css",
+    "./theme": "./dist/theme.css",
     "./tailwind": {
       "types": "./dist/tailwind.d.ts",
       "import": "./dist/tailwind.js",
@@ -31,6 +32,9 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "pretest": "npm run build",
+    "test": "node --test",
     "prepublishOnly": "npm run build",
     "release": "npm run build && npm publish --access public"
   },

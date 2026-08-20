@@ -75,31 +75,77 @@ Then in your CSS, import the tokens:
 @tailwind utilities;
 ```
 
+Or take the whole preset, which adds the `glow-*` box shadows and the
+`pulse-glow` animation on top of the same colors:
+
+```js
+import { qontinuiPreset } from "@qontinui/design-tokens/tailwind-preset";
+
+export default { presets: [qontinuiPreset] };
+```
+
+If you use the exported class-name constants (`attentionClassNames` and
+friends), also scan this package — see
+[Scanning this package](#scanning-this-package).
+
 ### Tailwind CSS v4 (qontinui-web)
+
+A CSS custom property alone mints **no utility** in v4 — every token has to be
+mapped under `@theme` first. That mapping ships generated, so importing it is
+the whole setup:
 
 ```css
 /* globals.css */
+@import "tailwindcss";
+@import "@qontinui/design-tokens/theme";
+```
+
+That single import pulls in `tokens.css` itself and maps every token, so the
+utility names are identical to the ones the v3 preset mints — `bg-brand-primary`,
+`text-text-muted`, `border-border-ds-subtle`, `bg-attention-bg`, and so on. The
+mapping is generated at build time from the same `tailwindColors` object the v3
+preset consumes, so the two paths cannot drift apart.
+
+Writing the `@theme` block by hand instead is supported but discouraged: it is
+50-odd mechanical lines, and mapping only some of them is invisible until a
+utility silently renders nothing. If you do, `inline` matters — it keeps each
+utility pointing at `var(--qontinui-*)`, so `.dark` still re-themes at runtime:
+
+```css
 @import "tailwindcss";
 @import "@qontinui/design-tokens/css";
 
 @theme inline {
   --color-brand-primary: var(--qontinui-brand-primary);
-  --color-brand-secondary: var(--qontinui-brand-secondary);
-  --color-brand-success: var(--qontinui-brand-success);
-  --color-surface-canvas: var(--qontinui-surface-canvas);
-  --color-surface-raised: var(--qontinui-surface-raised);
-
-  /* Attention layer — a CSS custom property alone mints NO utility in v4;
-     it must be mapped here before `bg-attention-bg` etc. exist. */
-  --color-attention-bg: var(--qontinui-attention-bg);
-  --color-attention-fg: var(--qontinui-attention-fg);
-  --color-attention-border: var(--qontinui-attention-border);
-  --color-attention-accent: var(--qontinui-attention-accent);
-  /* ... and the same for waiting / running / testing / landing / done / inert */
-
-  /* ... map other tokens as needed */
+  /* ... and every other token you intend to use */
 }
 ```
+
+### Scanning this package
+
+Tailwind emits a utility only when it finds that class name in a file it
+scans, and `node_modules` is not scanned by default. So if you use the exported
+class-name constants — `attentionClassNames[level]` and friends — the class
+string lives in **this package**, not in your source, and without this step the
+badge renders unstyled while every other token keeps working:
+
+```css
+/* Tailwind v4 — in the same CSS file */
+@source "../node_modules/@qontinui/design-tokens/dist";
+```
+
+```js
+// Tailwind v3 — tailwind.config.js
+export default {
+  content: [
+    "./src/**/*.{ts,tsx}",
+    "./node_modules/@qontinui/design-tokens/dist/**/*.js",
+  ],
+};
+```
+
+This is not needed if you only write the utilities out literally in your own
+JSX, which Tailwind already scans.
 
 ### TypeScript/JavaScript
 
@@ -224,7 +270,9 @@ exactly `--color-red-500` at alpha `0.15`. Several of these colors are outside
 the sRGB gamut, so a hex would not round-trip and the swap would no longer be a
 no-op. The `inert` values are hex because they are the existing Qontinui
 `surface-active` / `text-muted` / `border-subtle` values, which is what
-`bg-muted` / `text-muted-foreground` / `border-border` already resolve to.
+`bg-muted` / `text-muted-foreground` / `border-border` already resolve to —
+`colors.ts` references those constants rather than restating them, and the token
+test asserts that `tokens.css` (which cannot import) still agrees.
 
 Usage — CSS, Tailwind v3 (via the preset or `tailwindColors`), and TypeScript:
 
@@ -241,14 +289,35 @@ Usage — CSS, Tailwind v3 (via the preset or `tailwindColors`), and TypeScript:
 <div className="border-l-2 border-l-attention-accent" />
 ```
 
+Better, when the level is a variable — `attentionClassNames` is the composed
+triple per level, so a consuming surface never restates the mapping (restating
+it is how a surface ends up with red on a state nobody has to act on):
+
+```tsx
+import {
+  attentionClassNames,
+  attentionAccentClassNames,
+  attentionLevels,
+  type AttentionLevel,
+} from "@qontinui/design-tokens";
+
+<span className={`rounded-md border px-2 ${attentionClassNames[level]}`} />;
+<div className={`border-l-2 ${attentionAccentClassNames.attention}`} />;
+
+// `attentionLevels` is the render order for a legend or filter row:
+attentionLevels.map((level: AttentionLevel) => /* ... */);
+```
+
+Raw values, for canvas/chart code that cannot use a class:
+
 ```ts
 import { attentionPalette } from "@qontinui/design-tokens";
 
 attentionPalette.attention.bg; // "oklch(63.7% 0.237 25.331 / 0.15)"
 ```
 
-In Tailwind v4 (qontinui-web) the custom properties must additionally be mapped
-inside `@theme inline` before any `bg-attention-*` utility exists — see the
+Under Tailwind v4 these utilities exist only once the token layer is mapped
+under `@theme` — `@import "@qontinui/design-tokens/theme"` does that; see the
 Tailwind CSS v4 section above.
 
 ## Development Workflow
@@ -257,8 +326,19 @@ Tailwind CSS v4 section above.
 
 1. Edit the source files in `src/`
 2. Build: `npm run build`
-3. Test locally with linked projects
-4. Publish: `npm run release`
+3. Check: `npm run typecheck && npm run lint && npm test`
+4. Test locally with linked projects
+5. Publish: `npm run release`
+
+Every token is stated in several places at once — a TypeScript constant in
+`colors.ts`, a custom property in each of the two blocks in `tokens.css`, a
+`var()` reference in `tailwind.ts`, and a generated entry in the v4 theme layer.
+Nothing in the type system relates them, and a token defined in only some of
+those places fails silently: the utility just renders nothing, often in one
+theme on one page. `npm test` (`test/tokens.test.js`) asserts the whole set
+agrees, and runs against `dist/` so what it checks is what consumers install.
+Adding a token means adding it everywhere; the test will name whatever you
+missed.
 
 ### Publishing a New Version
 
@@ -289,10 +369,13 @@ qontinui-design-tokens/
 ├── src/
 │   ├── colors.ts         # Color primitives as TypeScript constants
 │   ├── tokens.css        # CSS custom properties
-│   ├── tailwind.ts       # Tailwind color configuration
+│   ├── tailwind.ts       # Tailwind color configuration + attention classes
 │   ├── tailwind-preset.ts # Full Tailwind preset
 │   └── index.ts          # Main exports
+├── test/
+│   └── tokens.test.js    # Asserts every statement of a token agrees
 ├── dist/                  # Built output (published to npm)
+│   └── theme.css         # Tailwind v4 @theme layer, GENERATED by tsup
 ├── package.json
 └── README.md
 ```
@@ -303,6 +386,7 @@ qontinui-design-tokens/
 | ----------------------------------------- | ---------------------------- |
 | `@qontinui/design-tokens`                 | Main entry - color constants |
 | `@qontinui/design-tokens/css`             | CSS custom properties        |
+| `@qontinui/design-tokens/theme`           | Tailwind v4 `@theme` layer (includes the CSS above) |
 | `@qontinui/design-tokens/tailwind`        | Tailwind color config        |
 | `@qontinui/design-tokens/tailwind-preset` | Full Tailwind preset         |
 

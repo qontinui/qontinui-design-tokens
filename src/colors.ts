@@ -155,14 +155,39 @@ export const attentionPalette = {
   /**
    * Nothing is happening and nothing is wrong. These are the values
    * qontinui-web's `bg-muted` / `text-muted-foreground` / `border-border`
-   * already resolve to — i.e. surface.active / text.muted / border.subtle.
+   * already resolve to — so they REFERENCE `surface.active` / `text.muted` /
+   * `border.subtle` rather than restating them. A copied hex would let the
+   * muted family drift away from `inert` one edit later, and nothing would
+   * say so; tokens.css keeps its own literals (a stylesheet has no imports),
+   * and the token test asserts the two agree.
    */
   inert: {
-    bg: "#2C2C32",
-    fg: "#8A8A8A",
-    border: "#2A2A30",
+    bg: surface.active,
+    fg: text.muted,
+    border: border.subtle,
   },
 } as const;
+
+export type AttentionPalette = typeof attentionPalette;
+export type AttentionLevel = keyof AttentionPalette;
+
+/**
+ * The attention levels, in the order a legend, filter row or summary strip
+ * should render them: most-urgent first, `inert` last.
+ *
+ * Typed `readonly AttentionLevel[]`, so the compiler rejects a name that is not
+ * a level. The reverse direction — that no level is *missing* from this list —
+ * is not expressible in the type system and is asserted by the token test.
+ */
+export const attentionLevels: readonly AttentionLevel[] = [
+  "attention",
+  "waiting",
+  "running",
+  "testing",
+  "landing",
+  "done",
+  "inert",
+] as const;
 
 // =============================================================================
 // Glow Effects (for subtle emphasis)
@@ -194,6 +219,4 @@ export type SurfaceColors = typeof surface;
 export type BorderColors = typeof border;
 export type TextColors = typeof text;
 export type SemanticColors = typeof semantic;
-export type AttentionPalette = typeof attentionPalette;
-export type AttentionLevel = keyof AttentionPalette;
 export type GlowColors = typeof glow;

@@ -26,6 +26,7 @@ import {
   attentionPalette,
   glow,
 } from "./colors";
+import type { AttentionLevel } from "./colors";
 
 /**
  * Tailwind-compatible color configuration
@@ -148,3 +149,56 @@ export const staticColors = {
 } as const;
 
 export type TailwindColors = typeof tailwindColors;
+
+// =============================================================================
+// Attention class names
+//
+// The utility names the attention layer mints, pre-composed into the triple a
+// badge, chip or row actually applies. Exported because the alternative is what
+// the layer was built to end: every consuming surface hand-writing
+// `bg-red-500/15 text-red-200 border-red-500/35` and getting the WHO-MUST-ACT
+// mapping subtly wrong (see colors.ts for the rule).
+//
+// These names are identical under Tailwind v3 (via `tailwindColors` or the
+// preset) and v4 (via the generated `@qontinui/design-tokens/theme`) — that
+// parity is the reason a component can be shared between qontinui-web and
+// qontinui-runner at all, and the token test asserts it.
+//
+// Spelled out as whole literals rather than built from `attentionLevels`,
+// because Tailwind generates a utility only when it finds the complete class
+// string in a scanned file. A name assembled at runtime — `bg-${level}-bg` —
+// appears nowhere in the shipped output, so the CSS would never be emitted and
+// the badge would render unstyled. For the same reason a consumer has to scan
+// this package; see the README.
+//
+// The `Record<AttentionLevel, ...>` annotation is what keeps the list honest:
+// adding a level to the palette without adding it here is a compile error.
+// =============================================================================
+
+/** `bg-*`/`text-*`/`border-*` triple for each level. */
+export const attentionClassNames: Record<AttentionLevel, string> = {
+  attention: "bg-attention-bg text-attention-fg border-attention-border",
+  waiting: "bg-waiting-bg text-waiting-fg border-waiting-border",
+  running: "bg-running-bg text-running-fg border-running-border",
+  testing: "bg-testing-bg text-testing-fg border-testing-border",
+  landing: "bg-landing-bg text-landing-fg border-landing-border",
+  done: "bg-done-bg text-done-fg border-done-border",
+  inert: "bg-inert-bg text-inert-fg border-inert-border",
+};
+
+/**
+ * Left-edge row accent, for the two levels that carry one. A row accent is a
+ * whole-record claim ("this line is the one you must look at"), so only
+ * `attention` and `waiting` define it — a third would dilute the signal.
+ */
+export const attentionAccentClassNames = {
+  attention: "border-l-attention-accent",
+  waiting: "border-l-waiting-accent",
+} as const satisfies Partial<Record<AttentionLevel, string>>;
+
+/** The quieter "ready, not yet merged" variant of `done`. */
+export const doneSubtleClassName =
+  "bg-done-subtle-bg text-done-subtle-fg border-done-subtle-border";
+
+export type AttentionClassNames = typeof attentionClassNames;
+export type AttentionAccentLevel = keyof typeof attentionAccentClassNames;

@@ -17,6 +17,7 @@ node_modules/
 npm-debug.log*
 
 # Test
+test/
 __tests__/
 *.test.ts
 coverage/

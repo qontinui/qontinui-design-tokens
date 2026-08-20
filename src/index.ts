@@ -11,10 +11,25 @@
  * // Import Tailwind config
  * import { tailwindColors } from '@qontinui/design-tokens/tailwind';
  *
+ * // Apply the attention layer (WHO MUST ACT) without hand-writing utilities
+ * import { attentionClassNames } from '@qontinui/design-tokens';
+ * <span className={attentionClassNames[level]} />
+ *
  * // Import CSS (in your CSS file)
  * // @import '@qontinui/design-tokens/css';
  */
 
 export * from "./colors";
-export { tailwindColors, staticColors } from "./tailwind";
+export {
+  tailwindColors,
+  staticColors,
+  attentionClassNames,
+  attentionAccentClassNames,
+  doneSubtleClassName,
+} from "./tailwind";
+export type {
+  TailwindColors,
+  AttentionClassNames,
+  AttentionAccentLevel,
+} from "./tailwind";
 export { qontinuiPreset } from "./tailwind-preset";
