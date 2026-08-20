@@ -88,6 +88,15 @@ Then in your CSS, import the tokens:
   --color-brand-success: var(--qontinui-brand-success);
   --color-surface-canvas: var(--qontinui-surface-canvas);
   --color-surface-raised: var(--qontinui-surface-raised);
+
+  /* Attention layer — a CSS custom property alone mints NO utility in v4;
+     it must be mapped here before `bg-attention-bg` etc. exist. */
+  --color-attention-bg: var(--qontinui-attention-bg);
+  --color-attention-fg: var(--qontinui-attention-fg);
+  --color-attention-border: var(--qontinui-attention-border);
+  --color-attention-accent: var(--qontinui-attention-accent);
+  /* ... and the same for waiting / running / testing / landing / done / inert */
+
   /* ... map other tokens as needed */
 }
 ```
@@ -146,6 +155,101 @@ console.log(surface.canvas); // "#111115"
 | `warning` | `#E5A853` | Warning states |
 | `error`   | `#E5534B` | Error states   |
 | `info`    | `#4A90D9` | Info states    |
+
+### Attention Colors
+
+**The rule: colour encodes WHO MUST ACT, not how alarming the word sounds.**
+
+Semantic colors above answer _"what kind of thing is this?"_. The attention
+layer answers a different and, on an operator console, more important question:
+_"does someone have to do something about this row, right now?"_
+
+Getting this backwards is the bug the layer exists to prevent. A red badge on
+"CI hasn't finished yet" trains the eye to ignore red — and then a genuinely
+failed check, the one state that needs a human push, sits in calm amber right
+next to it. So red is reserved for `attention`, amber for `waiting`, and every
+other in-flight state gets a hue that carries no urgency at all.
+
+| Level       | Means                                                | Hue    |
+| ----------- | ---------------------------------------------------- | ------ |
+| `attention` | Someone must act now                                 | red    |
+| `waiting`   | Waiting on something else; it will clear itself       | amber  |
+| `running`   | Work in flight, nobody is blocked                    | yellow |
+| `testing`   | In motion — rebasing, re-running, verifying          | purple |
+| `landing`   | In motion, on its way to done                        | blue   |
+| `done`      | Finished                                             | green  |
+| `inert`     | Nothing is happening and nothing is wrong            | muted  |
+
+Each level is a `-bg` / `-fg` / `-border` triple, so one level dresses a whole
+badge, chip or row. `attention` and `waiting` add an `-accent` for the
+left-edge row rule (the only two levels that earn one — the accent _is_ the
+"you must act" / "you are waiting" signal). `done` adds a quieter
+`-subtle-*` triple for "ready, not yet finished".
+
+| Token                    | Value                                 | Tailwind equivalent |
+| ------------------------ | ------------------------------------- | ------------------- |
+| `attention-bg`           | `oklch(63.7% 0.237 25.331 / 0.15)`    | `bg-red-500/15`     |
+| `attention-fg`           | `oklch(88.5% 0.062 18.334)`           | `text-red-200`      |
+| `attention-border`       | `oklch(63.7% 0.237 25.331 / 0.35)`    | `border-red-500/35` |
+| `attention-accent`       | `oklch(63.7% 0.237 25.331 / 0.8)`     | `border-l-red-500/80` |
+| `waiting-bg`             | `oklch(76.9% 0.188 70.08 / 0.15)`     | `bg-amber-500/15`   |
+| `waiting-fg`             | `oklch(92.4% 0.12 95.746)`            | `text-amber-200`    |
+| `waiting-border`         | `oklch(76.9% 0.188 70.08 / 0.3)`      | `border-amber-500/30` |
+| `waiting-accent`         | `oklch(76.9% 0.188 70.08 / 0.8)`      | `border-l-amber-500/80` |
+| `running-bg`             | `oklch(79.5% 0.184 86.047 / 0.15)`    | `bg-yellow-500/15`  |
+| `running-fg`             | `oklch(94.5% 0.129 101.54)`           | `text-yellow-200`   |
+| `running-border`         | `oklch(79.5% 0.184 86.047 / 0.3)`     | `border-yellow-500/30` |
+| `testing-bg`             | `oklch(62.7% 0.265 303.9 / 0.15)`     | `bg-purple-500/15`  |
+| `testing-fg`             | `oklch(90.2% 0.063 306.703)`          | `text-purple-200`   |
+| `testing-border`         | `oklch(62.7% 0.265 303.9 / 0.3)`      | `border-purple-500/30` |
+| `landing-bg`             | `oklch(62.3% 0.214 259.815 / 0.15)`   | `bg-blue-500/15`    |
+| `landing-fg`             | `oklch(88.2% 0.059 254.128)`          | `text-blue-200`     |
+| `landing-border`         | `oklch(62.3% 0.214 259.815 / 0.3)`    | `border-blue-500/30` |
+| `done-bg`                | `oklch(72.3% 0.219 149.579 / 0.15)`   | `bg-green-500/15`   |
+| `done-fg`                | `oklch(92.5% 0.084 155.995)`          | `text-green-200`    |
+| `done-border`            | `oklch(72.3% 0.219 149.579 / 0.3)`    | `border-green-500/30` |
+| `done-subtle-bg`         | `oklch(72.3% 0.219 149.579 / 0.05)`   | `bg-green-500/5`    |
+| `done-subtle-fg`         | `oklch(87.1% 0.15 154.449)`           | `text-green-300`    |
+| `done-subtle-border`     | `oklch(72.3% 0.219 149.579 / 0.25)`   | `border-green-500/25` |
+| `inert-bg`               | `#2C2C32`                             | `bg-muted`          |
+| `inert-fg`               | `#8A8A8A`                             | `text-muted-foreground` |
+| `inert-border`           | `#2A2A30`                             | `border-border`     |
+
+**Why oklch and not hex.** These values are carried over verbatim from the
+Tailwind v4 palette the surfaces already render, so adopting the tokens is a
+_provable visual no-op_. Tailwind v4 compiles `bg-red-500/15` to
+`color-mix(in oklab, var(--color-red-500) 15%, transparent)`; because
+`transparent` contributes nothing under premultiplied interpolation, that is
+exactly `--color-red-500` at alpha `0.15`. Several of these colors are outside
+the sRGB gamut, so a hex would not round-trip and the swap would no longer be a
+no-op. The `inert` values are hex because they are the existing Qontinui
+`surface-active` / `text-muted` / `border-subtle` values, which is what
+`bg-muted` / `text-muted-foreground` / `border-border` already resolve to.
+
+Usage — CSS, Tailwind v3 (via the preset or `tailwindColors`), and TypeScript:
+
+```css
+.row-badge {
+  background: var(--qontinui-waiting-bg);
+  color: var(--qontinui-waiting-fg);
+  border-color: var(--qontinui-waiting-border);
+}
+```
+
+```jsx
+<span className="bg-attention-bg text-attention-fg border-attention-border" />
+<div className="border-l-2 border-l-attention-accent" />
+```
+
+```ts
+import { attentionPalette } from "@qontinui/design-tokens";
+
+attentionPalette.attention.bg; // "oklch(63.7% 0.237 25.331 / 0.15)"
+```
+
+In Tailwind v4 (qontinui-web) the custom properties must additionally be mapped
+inside `@theme inline` before any `bg-attention-*` utility exists — see the
+Tailwind CSS v4 section above.
 
 ## Development Workflow
 

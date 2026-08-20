@@ -55,6 +55,76 @@
   --qontinui-info-muted: rgba(74, 144, 217, 0.15);
 
   /* ===========================================
+   * Attention Colors
+   *
+   * THE RULE: colour encodes WHO MUST ACT, not how alarming the word sounds.
+   *
+   *   attention (red)    someone must act now
+   *   waiting   (amber)  waiting on something else; it will clear itself
+   *   running   (yellow) work in flight, nobody is blocked
+   *   testing   (purple) in motion (rebasing, re-running, verifying)
+   *   landing   (blue)   in motion, on its way to done
+   *   done      (green)  finished
+   *   inert     (muted)  nothing is happening and nothing is wrong
+   *
+   * Getting this backwards is the bug the layer exists to prevent: a red badge
+   * on "CI hasn't finished" trains the eye to ignore red, while a failed check
+   * — the one state that genuinely needs a push — sits in amber beside it.
+   *
+   * Values are carried over VERBATIM from the Tailwind v4 palette literals
+   * these tokens replace, so adopting them is a rendered no-op. Tailwind v4
+   * compiles `bg-red-500/15` to
+   * `color-mix(in oklab, var(--color-red-500) 15%, transparent)`; because
+   * `transparent` contributes nothing under premultiplied interpolation, that
+   * is exactly red-500 at alpha 0.15 — hence the oklch-with-alpha form below
+   * rather than a lossy sRGB hex.
+   * =========================================== */
+
+  /* attention — red-500/15, red-200, red-500/35, red-500/80 (accent) */
+  --qontinui-attention-bg: oklch(63.7% 0.237 25.331 / 0.15);
+  --qontinui-attention-fg: oklch(88.5% 0.062 18.334);
+  --qontinui-attention-border: oklch(63.7% 0.237 25.331 / 0.35);
+  --qontinui-attention-accent: oklch(63.7% 0.237 25.331 / 0.8);
+
+  /* waiting — amber-500/15, amber-200, amber-500/30, amber-500/80 (accent) */
+  --qontinui-waiting-bg: oklch(76.9% 0.188 70.08 / 0.15);
+  --qontinui-waiting-fg: oklch(92.4% 0.12 95.746);
+  --qontinui-waiting-border: oklch(76.9% 0.188 70.08 / 0.3);
+  --qontinui-waiting-accent: oklch(76.9% 0.188 70.08 / 0.8);
+
+  /* running — yellow-500/15, yellow-200, yellow-500/30 */
+  --qontinui-running-bg: oklch(79.5% 0.184 86.047 / 0.15);
+  --qontinui-running-fg: oklch(94.5% 0.129 101.54);
+  --qontinui-running-border: oklch(79.5% 0.184 86.047 / 0.3);
+
+  /* testing — purple-500/15, purple-200, purple-500/30 */
+  --qontinui-testing-bg: oklch(62.7% 0.265 303.9 / 0.15);
+  --qontinui-testing-fg: oklch(90.2% 0.063 306.703);
+  --qontinui-testing-border: oklch(62.7% 0.265 303.9 / 0.3);
+
+  /* landing — blue-500/15, blue-200, blue-500/30 */
+  --qontinui-landing-bg: oklch(62.3% 0.214 259.815 / 0.15);
+  --qontinui-landing-fg: oklch(88.2% 0.059 254.128);
+  --qontinui-landing-border: oklch(62.3% 0.214 259.815 / 0.3);
+
+  /* done — green-500/15, green-200, green-500/30;
+     the -subtle triple is the quieter "ready, not yet merged" variant:
+     green-500/5, green-300, green-500/25 */
+  --qontinui-done-bg: oklch(72.3% 0.219 149.579 / 0.15);
+  --qontinui-done-fg: oklch(92.5% 0.084 155.995);
+  --qontinui-done-border: oklch(72.3% 0.219 149.579 / 0.3);
+  --qontinui-done-subtle-bg: oklch(72.3% 0.219 149.579 / 0.05);
+  --qontinui-done-subtle-fg: oklch(87.1% 0.15 154.449);
+  --qontinui-done-subtle-border: oklch(72.3% 0.219 149.579 / 0.25);
+
+  /* inert — the muted family: identical to the values qontinui-web's
+     bg-muted / text-muted-foreground / border-border already resolve to
+     (surface-active, text-muted, border-subtle) */
+  --qontinui-inert-bg: #2c2c32;
+  --qontinui-inert-fg: #8a8a8a;
+  --qontinui-inert-border: #2a2a30;
+
+  /* ===========================================
    * Glow Effects
    * =========================================== */
   --qontinui-glow-primary: rgba(74, 144, 217, 0.2);
@@ -91,6 +161,41 @@
   --qontinui-error-muted: rgba(229, 83, 75, 0.15);
   --qontinui-info: #4a90d9;
   --qontinui-info-muted: rgba(74, 144, 217, 0.15);
+
+  /* Attention layer — see the :root block above for the rule and the
+     Tailwind-literal derivation. Same values (already dark-optimized). */
+  --qontinui-attention-bg: oklch(63.7% 0.237 25.331 / 0.15);
+  --qontinui-attention-fg: oklch(88.5% 0.062 18.334);
+  --qontinui-attention-border: oklch(63.7% 0.237 25.331 / 0.35);
+  --qontinui-attention-accent: oklch(63.7% 0.237 25.331 / 0.8);
+
+  --qontinui-waiting-bg: oklch(76.9% 0.188 70.08 / 0.15);
+  --qontinui-waiting-fg: oklch(92.4% 0.12 95.746);
+  --qontinui-waiting-border: oklch(76.9% 0.188 70.08 / 0.3);
+  --qontinui-waiting-accent: oklch(76.9% 0.188 70.08 / 0.8);
+
+  --qontinui-running-bg: oklch(79.5% 0.184 86.047 / 0.15);
+  --qontinui-running-fg: oklch(94.5% 0.129 101.54);
+  --qontinui-running-border: oklch(79.5% 0.184 86.047 / 0.3);
+
+  --qontinui-testing-bg: oklch(62.7% 0.265 303.9 / 0.15);
+  --qontinui-testing-fg: oklch(90.2% 0.063 306.703);
+  --qontinui-testing-border: oklch(62.7% 0.265 303.9 / 0.3);
+
+  --qontinui-landing-bg: oklch(62.3% 0.214 259.815 / 0.15);
+  --qontinui-landing-fg: oklch(88.2% 0.059 254.128);
+  --qontinui-landing-border: oklch(62.3% 0.214 259.815 / 0.3);
+
+  --qontinui-done-bg: oklch(72.3% 0.219 149.579 / 0.15);
+  --qontinui-done-fg: oklch(92.5% 0.084 155.995);
+  --qontinui-done-border: oklch(72.3% 0.219 149.579 / 0.3);
+  --qontinui-done-subtle-bg: oklch(72.3% 0.219 149.579 / 0.05);
+  --qontinui-done-subtle-fg: oklch(87.1% 0.15 154.449);
+  --qontinui-done-subtle-border: oklch(72.3% 0.219 149.579 / 0.25);
+
+  --qontinui-inert-bg: #2c2c32;
+  --qontinui-inert-fg: #8a8a8a;
+  --qontinui-inert-border: #2a2a30;
 
   --qontinui-glow-primary: rgba(74, 144, 217, 0.2);
   --qontinui-glow-secondary: rgba(139, 107, 181, 0.2);

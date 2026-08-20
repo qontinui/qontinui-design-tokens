@@ -20,6 +20,13 @@ export const qontinuiPreset = {
   darkMode: ["class"],
   theme: {
     extend: {
+      // Includes the attention layer (attention / waiting / running / testing /
+      // landing / done / inert), so `bg-attention-bg`, `text-waiting-fg`,
+      // `border-l-attention-accent` etc. are available to preset consumers with
+      // no extra wiring. THE RULE: colour encodes WHO MUST ACT, not how
+      // alarming the word sounds — see colors.ts. Keep this spread whole; a
+      // narrowed pick here would silently half-define the layer, exactly as an
+      // edit to only one of tokens.css's two blocks would.
       colors: tailwindColors,
       boxShadow: {
         "glow-primary": "0 0 12px var(--qontinui-glow-primary)",
