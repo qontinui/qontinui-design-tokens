@@ -19,7 +19,7 @@
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 
 import {
   colors,
@@ -86,6 +86,10 @@ const varName = (reference) => {
   assert.ok(match, `not a bare var() reference: ${reference}`);
   return match[1];
 };
+
+const packageJson = JSON.parse(
+  readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+);
 
 const tokensCss = read("tokens.css");
 const themeCss = read("theme.css");
@@ -265,16 +269,91 @@ test("the preset carries the whole color map, not a narrowed pick", () => {
   assert.equal(qontinuiPreset.theme.extend.colors, tailwindColors);
 });
 
+const themeLayer = declarationsIn(themeCss, "@theme inline");
+
+/** The `@theme` entries in one v4 namespace, keyed without the prefix. */
+const namespace = (prefix) =>
+  new Map(
+    [...themeLayer]
+      .filter(([name]) => name.startsWith(prefix))
+      .map(([name, value]) => [name.slice(prefix.length), value]),
+  );
+
 test("the v4 theme layer maps every utility the v3 map defines", () => {
-  const mapped = declarationsIn(themeCss, "@theme inline");
+  const mapped = namespace("--color-");
   for (const [utility, reference] of references) {
     assert.equal(
-      mapped.get(`--color-${utility}`),
+      mapped.get(utility),
       normalize(reference),
       `v4 theme layer is missing or wrong for --color-${utility}`,
     );
   }
-  assert.equal(mapped.size, references.size, "v4 theme layer has extra entries");
+  assert.equal(mapped.size, references.size, "v4 theme layer has extra colors");
+});
+
+test("the v4 theme layer carries the preset's non-color extensions too", () => {
+  // Colors were never the only thing the preset mints, and the three families
+  // below are where a v4-by-hand layer quietly diverges: `animate-pulse-glow`
+  // does not exist at all without `--animate-*`, and `shadow-glow-primary`
+  // resolves off `--color-glow-primary` as a shadow COLOUR — a real class name
+  // emitting the wrong property, which is worse than a missing one.
+  const { boxShadow, animation, keyframes } = qontinuiPreset.theme.extend;
+
+  const shadows = namespace("--shadow-");
+  for (const [name, value] of Object.entries(boxShadow)) {
+    assert.equal(shadows.get(name), normalize(value), `--shadow-${name}`);
+  }
+  assert.equal(shadows.size, Object.keys(boxShadow).length);
+
+  const animations = namespace("--animate-");
+  for (const [name, value] of Object.entries(animation)) {
+    assert.equal(animations.get(name), normalize(value), `--animate-${name}`);
+  }
+  assert.equal(animations.size, Object.keys(animation).length);
+
+  // An `--animate-*` naming keyframes the layer does not define animates
+  // nothing, silently.
+  for (const name of Object.keys(keyframes)) {
+    assert.match(themeCss, new RegExp(`@keyframes\\s+${name}\\s*\\{`));
+  }
+  for (const value of Object.values(animation)) {
+    const named = value.split(/\s+/)[0];
+    assert.ok(named in keyframes, `animation references unknown keyframes ${named}`);
+  }
+});
+
+test("every preset theme.extend key reaches the v4 layer", () => {
+  // The generator translates one v4 `@theme` namespace per key. A key it does
+  // not know about is not an error anywhere in v3 — it just means v4 consumers
+  // are missing utilities v3 consumers have, which is how this layer diverged
+  // in the first place. tsup.config.ts throws on an unhandled key; this is the
+  // same guard stated where a reader of the tests will see it.
+  assert.deepEqual(Object.keys(qontinuiPreset.theme.extend).sort(), [
+    "animation",
+    "boxShadow",
+    "colors",
+    "keyframes",
+  ]);
+});
+
+test("the v4 theme layer declares the preset's dark-mode strategy", () => {
+  // v4 defaults `dark:` to `prefers-color-scheme`, while the preset — and
+  // tokens.css's own `.dark` block — are class-based. Left unstated, toggling
+  // the class re-themes the tokens and leaves every `dark:` utility behind.
+  // The selector is v3's own, so both engines emit the same rule.
+  //
+  // Normalised rather than indexed: v3 accepts `"class"`, `["class"]` and
+  // `["class", "<selector>"]`, and `darkMode[0]` reads the first of those as
+  // the letter `"c"` while silently discarding the selector in the third.
+  const [strategy, selector = ".dark"] = Array.isArray(qontinuiPreset.darkMode)
+    ? qontinuiPreset.darkMode
+    : [qontinuiPreset.darkMode];
+
+  assert.ok(["class", "selector"].includes(strategy), `darkMode: ${strategy}`);
+  assert.ok(
+    themeCss.includes(`@custom-variant dark (&:is(${selector} *));`),
+    `the generated variant does not key on the preset's ${selector}`,
+  );
 });
 
 test("the v4 theme layer pulls in the custom properties it maps", () => {
@@ -282,4 +361,53 @@ test("the v4 theme layer pulls in the custom properties it maps", () => {
   // importing only the theme layer would otherwise resolve all of them to
   // nothing.
   assert.match(themeCss, /@import\s+"\.\/tokens\.css";/);
+});
+
+// ---------------------------------------------------------------------------
+// The published surface
+// ---------------------------------------------------------------------------
+
+/** `./dist/index.js` -> the file it names, relative to the package root. */
+const packageFile = (target) =>
+  new URL(`../${target.replace(/^\.\//, "")}`, import.meta.url);
+
+test("every declared export subpath resolves to a file that was built", () => {
+  // `exports` is the only thing standing between a consumer and a bare
+  // `ERR_MODULE_NOT_FOUND`, and every target here is produced by a DIFFERENT
+  // mechanism — tsup entries, tsup's dts pass, the copy step and the generator
+  // in onSuccess. Dropping any one of them leaves the map pointing at nothing,
+  // and nothing else in this repo reads the map at all.
+  const targets = new Set();
+  const collect = (value) => {
+    if (typeof value === "string") targets.add(value);
+    else for (const nested of Object.values(value)) collect(nested);
+  };
+  collect(packageJson.exports);
+
+  assert.ok(targets.size > 0, "package.json declares no exports");
+  for (const target of targets) {
+    assert.match(target, /^\.\/dist\//, `${target} is not published from dist/`);
+    assert.ok(
+      existsSync(packageFile(target)),
+      `exports target does not exist after a build: ${target}`,
+    );
+  }
+});
+
+test("the entry points package.json advertises outside `exports` exist too", () => {
+  // `main` / `module` / `types` are what older resolvers and editors read.
+  for (const field of ["main", "module", "types"]) {
+    const target = packageJson[field];
+    assert.ok(target, `package.json has no ${field}`);
+    assert.ok(
+      existsSync(packageFile(target)),
+      `${field} points at a file that does not exist: ${target}`,
+    );
+  }
+});
+
+test("`files` publishes everything `exports` points at", () => {
+  // A target that exists locally but is not in the published tarball fails only
+  // for the consumer, and only after a release.
+  assert.deepEqual(packageJson.files, ["dist"]);
 });

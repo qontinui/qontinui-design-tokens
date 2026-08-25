@@ -100,16 +100,35 @@ the whole setup:
 @import "@qontinui/design-tokens/theme";
 ```
 
-That single import pulls in `tokens.css` itself and maps every token, so the
-utility names are identical to the ones the v3 preset mints — `bg-brand-primary`,
-`text-text-muted`, `border-border-ds-subtle`, `bg-attention-bg`, and so on. The
-mapping is generated at build time from the same `tailwindColors` object the v3
-preset consumes, so the two paths cannot drift apart.
+That single import pulls in `tokens.css` itself and maps everything the v3
+preset mints, so the class names mean the same thing under both engines —
+`bg-brand-primary`, `text-text-muted`, `border-border-ds-subtle`,
+`bg-attention-bg`, `shadow-glow-primary`, `animate-pulse-glow`, and `dark:`.
+The layer is generated at build time from the v3 preset object itself, and
+`test/tailwind-parity.test.js` compiles both engines and compares what they
+emit, so the two paths cannot drift apart.
+
+The import also sets **class-based dark mode**, which is the preset's
+`darkMode: ["class"]` in v4 form:
+
+```css
+@custom-variant dark (&:is(.dark *));
+```
+
+v4 otherwise resolves `dark:` from `prefers-color-scheme`, while `tokens.css`
+re-themes on the `.dark` class — so without this, toggling the class moves the
+tokens and leaves every `dark:` utility behind. Declare your own
+`@custom-variant dark` after the import if you want a different strategy.
 
 Writing the `@theme` block by hand instead is supported but discouraged: it is
 50-odd mechanical lines, and mapping only some of them is invisible until a
-utility silently renders nothing. If you do, `inline` matters — it keeps each
-utility pointing at `var(--qontinui-*)`, so `.dark` still re-themes at runtime:
+utility silently renders nothing — or, worse, renders the wrong thing. With
+only the colors mapped, `shadow-glow-primary` is still a real class in v4, but
+it only sets `--tw-shadow-color` — tinting a shadow that is not there — so it
+paints nothing, where v3 paints the glow. If you do write it by hand, `inline`
+matters — it keeps
+each utility pointing at `var(--qontinui-*)`, so `.dark` still re-themes at
+runtime:
 
 ```css
 @import "tailwindcss";
@@ -118,6 +137,14 @@ utility pointing at `var(--qontinui-*)`, so `.dark` still re-themes at runtime:
 @theme inline {
   --color-brand-primary: var(--qontinui-brand-primary);
   /* ... and every other token you intend to use */
+
+  /* colors are not the whole preset — these have no `--color-*` spelling */
+  --shadow-glow-primary: 0 0 12px var(--qontinui-glow-primary);
+  --animate-pulse-glow: pulse-glow 2s ease-in-out infinite;
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 12px var(--qontinui-glow-primary); }
+    50% { box-shadow: 0 0 20px var(--qontinui-glow-primary); }
+  }
 }
 ```
 
@@ -335,10 +362,28 @@ Every token is stated in several places at once — a TypeScript constant in
 `var()` reference in `tailwind.ts`, and a generated entry in the v4 theme layer.
 Nothing in the type system relates them, and a token defined in only some of
 those places fails silently: the utility just renders nothing, often in one
-theme on one page. `npm test` (`test/tokens.test.js`) asserts the whole set
-agrees, and runs against `dist/` so what it checks is what consumers install.
-Adding a token means adding it everywhere; the test will name whatever you
-missed.
+theme on one page. `test/tokens.test.js` asserts the whole set agrees, and runs
+against `dist/` so what it checks is what consumers install. Adding a token
+means adding it everywhere; the test will name whatever you missed.
+
+`test/tailwind-parity.test.js` then asks the question the file-level checks
+cannot: it compiles a fixture with **both real engines** — v3 through the
+preset, v4 through the generated theme layer — and compares what each one
+emits. A class that exists in both but means something different in each passes
+every text-level assertion there is, which is how `shadow-glow-primary` came to
+paint a glow under v3 and nothing at all under v4.
+
+Comparing the two takes some care, because a class name can be claimed twice.
+`glow` is in the preset's `colors` *and* its `boxShadow`, so both engines emit
+`shadow-glow-primary` through their own chain of private `--tw-*` variables,
+and in v3 the colour-derived declaration comes last and wins. Reading any single
+declaration therefore reports a value the cascade may discard; the test resolves
+each chain and compares the result.
+
+Anything the preset adds — at any level, not just under `theme.extend` — needs a
+v4 `@theme` namespace to match. `tsup.config.ts` fails the build on a key it
+does not know how to translate, and on one it expected and did not find, rather
+than generating a layer that is quietly short.
 
 ### Publishing a New Version
 
@@ -373,7 +418,8 @@ qontinui-design-tokens/
 │   ├── tailwind-preset.ts # Full Tailwind preset
 │   └── index.ts          # Main exports
 ├── test/
-│   └── tokens.test.js    # Asserts every statement of a token agrees
+│   ├── tokens.test.js    # Asserts every statement of a token agrees
+│   └── tailwind-parity.test.js # Compiles v3 + v4, asserts they emit the same
 ├── dist/                  # Built output (published to npm)
 │   └── theme.css         # Tailwind v4 @theme layer, GENERATED by tsup
 ├── package.json
@@ -386,7 +432,7 @@ qontinui-design-tokens/
 | ----------------------------------------- | ---------------------------- |
 | `@qontinui/design-tokens`                 | Main entry - color constants |
 | `@qontinui/design-tokens/css`             | CSS custom properties        |
-| `@qontinui/design-tokens/theme`           | Tailwind v4 `@theme` layer (includes the CSS above) |
+| `@qontinui/design-tokens/theme`           | Tailwind v4 `@theme` layer + class-based `dark:` (includes the CSS above) |
 | `@qontinui/design-tokens/tailwind`        | Tailwind color config        |
 | `@qontinui/design-tokens/tailwind-preset` | Full Tailwind preset         |
 

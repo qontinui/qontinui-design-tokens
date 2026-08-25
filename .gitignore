@@ -22,3 +22,7 @@ Thumbs.db
 .env
 .env.local
 .worktrees/
+
+# Tailwind fixture dirs created by test/tailwind-parity.test.js. It removes its
+# own dir in a `finally`, so one of these surviving means a run was killed.
+.tw-fixture-*/
