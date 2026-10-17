@@ -115,7 +115,11 @@ test(":root and .dark agree on every value", () => {
 });
 
 test("no custom property is declared twice within a block", () => {
-  const declared = tokensCss.match(/^\s*--qontinui-[a-z0-9-]+\s*:/gm) ?? [];
+  // Only the two color blocks: the motion and typography blocks that follow
+  // `.dark` are not themed, and test/motion-typography.test.js owns them.
+  const darkStart = tokensCss.indexOf(".dark {");
+  const colorCss = tokensCss.slice(0, tokensCss.indexOf("\n}", darkStart) + 2);
+  const declared = colorCss.match(/^\s*--qontinui-[a-z0-9-]+\s*:/gm) ?? [];
   assert.equal(declared.length, root.size + dark.size);
 });
 
