@@ -464,13 +464,18 @@ publishing over GitHub OIDC, with provenance; no stored token):
 # 1. Bump the version, commit it, and land it on main through a PR
 npm version patch --no-git-tag-version  # or minor, major
 
-# 2. After it lands, tag that commit on main and push the tag
-git tag design-tokens-v<version> && git push origin design-tokens-v<version>
+# 2. After it lands, read the landed version and tag origin/main with it
+git fetch origin && git show origin/main:package.json | grep '"version"'
+git tag design-tokens-v<version> origin/main && git push origin design-tokens-v<version>
 ```
 
 The workflow refuses a tag whose version differs from `package.json`, a tag on
 a commit that is not on `main`, and a prerelease version. It reads the
 published version back from npm before it succeeds.
+
+npm moves the `latest` dist-tag to whatever this workflow publishes, so
+publishing a lower non-prerelease version (a backport to an older line) would
+move `latest` backwards; backports are out of scope for this workflow.
 
 The first publish through this workflow waits on two operator decisions: the
 npm trusted-publisher policy for this repository and workflow on npmjs.com, and
