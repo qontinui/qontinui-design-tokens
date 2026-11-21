@@ -1,0 +1,99 @@
+name: Publish to npm
+
+# Tag-triggered publishing for @qontinui/design-tokens, modelled on
+# qontinui/ui-bridge's `.github/workflows/publish.yml`: npm trusted publishing
+# over GitHub OIDC, no stored NPM_TOKEN, and a provenance attestation.
+#
+# FIRST RUN IS BLOCKED ON TWO OPERATOR DECISIONS — do not push a tag until both
+# are settled (plan 2026-11-19-design-surface-defects-and-stale-records-found-by-the-design-loop-study,
+# open questions O1 and O2):
+#   - O1, the licence of the next release. npm `1.0.0` is MIT; this repository
+#     has been AGPL-3.0-or-later since 9ff6334. Which licence 1.3.0 ships under
+#     is the operator's call.
+#   - O2, the npm trusted-publisher policy. A first OIDC publish needs the
+#     policy for qontinui/qontinui-design-tokens + `.github/workflows/publish.yml`
+#     configured on npmjs.com (operator). Without it the publish step fails.
+#
+# To release: bump `version` in package.json, commit and land it, then
+#   git tag design-tokens-v<version> && git push origin design-tokens-v<version>
+# The tag's version must equal package.json's, or the job refuses before
+# publishing. Nothing publishes without a tag.
+on:
+  push:
+    tags:
+      - 'design-tokens-v*'
+
+jobs:
+  publish:
+    # Public repository: a GitHub-hosted runner costs nothing.
+    runs-on: ubuntu-latest
+    permissions:
+      # Required for npm trusted publishing — GitHub mints a short-lived
+      # OIDC JWT that npm verifies against the package's trust policy
+      # configured at npmjs.com. No long-lived NPM_TOKEN secret is used.
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Upgrade npm to 11.5.1+ for trusted publishing
+        # node@20 ships npm@10, but npm trusted publishing needs 11.5.1+.
+        # Pinned to the 11.x line, not @latest: npm 12 requires node >=22.22
+        # and aborts with EBADENGINE on node@20 (the failure ui-bridge hit).
+        run: npm install --global npm@^11
+
+      - name: Check the tag matches package.json
+        id: pkg
+        run: |
+          tag="${{ github.ref_name }}"
+          tag_version="${tag#design-tokens-v}"
+          pkg_version="$(node -p "require('./package.json').version")"
+          if [ "$tag_version" != "$pkg_version" ]; then
+            echo "::error::Tag '$tag' names version '$tag_version' but package.json is '$pkg_version'"
+            exit 1
+          fi
+          echo "version=$pkg_version" >> "$GITHUB_OUTPUT"
+          echo "Publishing @qontinui/design-tokens@$pkg_version"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test
+
+      - name: Publish
+        # --provenance attests the tarball back to this commit and run,
+        # signed by the OIDC token.
+        run: npm publish --access public --provenance
+
+      - name: Read the published version back
+        # A publish's exit status is not evidence it landed: read the registry
+        # and require the version package.json declares. Retries cover the
+        # registry's propagation delay.
+        run: |
+          want="${{ steps.pkg.outputs.version }}"
+          for attempt in 1 2 3 4 5 6; do
+            got="$(npm view @qontinui/design-tokens version 2>/dev/null || true)"
+            if [ "$got" = "$want" ]; then
+              echo "npm serves @qontinui/design-tokens@$got"
+              exit 0
+            fi
+            echo "attempt $attempt: npm serves '$got', want '$want'; retrying"
+            sleep 20
+          done
+          echo "::error::npm view @qontinui/design-tokens version returned '$got', expected '$want'"
+          exit 1
