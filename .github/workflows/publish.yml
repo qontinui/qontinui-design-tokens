@@ -17,9 +17,10 @@ name: Publish to npm
 # To release: bump `version` in package.json, commit and land it, then
 #   git tag design-tokens-v<version> && git push origin design-tokens-v<version>
 # The tag's version must equal package.json's, and the tagged commit must be
-# on main, or the job refuses before publishing. Nothing publishes without a
-# tag: package.json carries no `release` script, so this workflow is the only
-# publish path.
+# on main, or the job refuses before publishing. A prerelease version (one
+# containing `-`) is refused too, so nothing publishes a prerelease to `latest`.
+# package.json carries no `release` script, so this workflow is the only
+# automated publish path; nothing it runs publishes without a tag.
 on:
   push:
     tags:
@@ -67,6 +68,12 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: |
           tag_version="${TAG#design-tokens-v}"
+          case "$tag_version" in
+            *-*)
+              echo "::error::Tag '$TAG' names prerelease version '$tag_version'; this workflow publishes to 'latest' and refuses prereleases"
+              exit 1
+              ;;
+          esac
           pkg_version="$(node -p "require('./package.json').version")"
           if [ "$tag_version" != "$pkg_version" ]; then
             echo "::error::Tag '$TAG' names version '$tag_version' but package.json is '$pkg_version'"
@@ -101,8 +108,10 @@ jobs:
               echo "npm serves @qontinui/design-tokens@$got"
               exit 0
             fi
-            echo "attempt $attempt: npm serves '$got', want '$want'; retrying"
-            sleep 20
+            if [ "$attempt" -lt 6 ]; then
+              echo "attempt $attempt: npm serves '$got', want '$want'; retrying"
+              sleep 20
+            fi
           done
           echo "::error::npm view @qontinui/design-tokens@$want version returned '$got', expected '$want'"
           exit 1

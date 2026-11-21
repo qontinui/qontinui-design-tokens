@@ -425,7 +425,7 @@ custom properties, for example `duration-[var(--qontinui-duration-base)]`.
 2. Build: `npm run build`
 3. Check: `npm run typecheck && npm run lint && npm test`
 4. Test locally with linked projects
-5. Publish: `npm run release`
+5. Publish: tag a commit on `main` (see [Publishing a New Version](#publishing-a-new-version))
 
 Every token is stated in several places at once — a TypeScript constant in
 `colors.ts`, a custom property in each of the two blocks in `tokens.css`, a
@@ -457,13 +457,25 @@ than generating a layer that is quietly short.
 
 ### Publishing a New Version
 
-```bash
-# Bump version
-npm version patch  # or minor, major
+Publishing is tag-driven, through `.github/workflows/publish.yml` (npm trusted
+publishing over GitHub OIDC, with provenance; no stored token):
 
-# Build and publish
-npm run release
+```bash
+# 1. Bump the version, commit it, and land it on main through a PR
+npm version patch --no-git-tag-version  # or minor, major
+
+# 2. After it lands, tag that commit on main and push the tag
+git tag design-tokens-v<version> && git push origin design-tokens-v<version>
 ```
+
+The workflow refuses a tag whose version differs from `package.json`, a tag on
+a commit that is not on `main`, and a prerelease version. It reads the
+published version back from npm before it succeeds.
+
+The first publish through this workflow waits on two operator decisions: the
+npm trusted-publisher policy for this repository and workflow on npmjs.com, and
+the licence of the next release (npm `1.0.0` is MIT; the repository is
+AGPL-3.0-or-later). Do not push a tag until both are settled.
 
 ### Updating Consuming Projects
 
