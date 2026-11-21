@@ -16,8 +16,10 @@ name: Publish to npm
 #
 # To release: bump `version` in package.json, commit and land it, then
 #   git tag design-tokens-v<version> && git push origin design-tokens-v<version>
-# The tag's version must equal package.json's, or the job refuses before
-# publishing. Nothing publishes without a tag.
+# The tag's version must equal package.json's, and the tagged commit must be
+# on main, or the job refuses before publishing. Nothing publishes without a
+# tag: package.json carries no `release` script, so this workflow is the only
+# publish path.
 on:
   push:
     tags:
@@ -34,9 +36,12 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          # Full history, so the main-ancestry check below can see main.
+          fetch-depth: 0
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
@@ -47,14 +52,24 @@ jobs:
         # and aborts with EBADENGINE on node@20 (the failure ui-bridge hit).
         run: npm install --global npm@^11
 
+      - name: Refuse a tag whose commit is not on main
+        run: |
+          git fetch origin main
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::Tagged commit $GITHUB_SHA is not on main; land it on main before tagging"
+            exit 1
+          fi
+
       - name: Check the tag matches package.json
         id: pkg
+        env:
+          # Passed through env, never interpolated into the script.
+          TAG: ${{ github.ref_name }}
         run: |
-          tag="${{ github.ref_name }}"
-          tag_version="${tag#design-tokens-v}"
+          tag_version="${TAG#design-tokens-v}"
           pkg_version="$(node -p "require('./package.json').version")"
           if [ "$tag_version" != "$pkg_version" ]; then
-            echo "::error::Tag '$tag' names version '$tag_version' but package.json is '$pkg_version'"
+            echo "::error::Tag '$TAG' names version '$tag_version' but package.json is '$pkg_version'"
             exit 1
           fi
           echo "version=$pkg_version" >> "$GITHUB_OUTPUT"
@@ -63,19 +78,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Type check
-        run: npm run typecheck
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Build
-        run: npm run build
-
-      - name: Test
-        run: npm test
-
       - name: Publish
+        # No separate typecheck/lint/build/test steps: `npm publish` runs
+        # package.json's `prepublishOnly` (typecheck, lint, test), and `test`'s
+        # `pretest` runs the build, so each runs exactly once before the
+        # tarball is packed, and a failure aborts the publish.
         # --provenance attests the tarball back to this commit and run,
         # signed by the OIDC token.
         run: npm publish --access public --provenance
@@ -84,10 +91,12 @@ jobs:
         # A publish's exit status is not evidence it landed: read the registry
         # and require the version package.json declares. Retries cover the
         # registry's propagation delay.
+        env:
+          EXPECTED_VERSION: ${{ steps.pkg.outputs.version }}
         run: |
-          want="${{ steps.pkg.outputs.version }}"
+          want="$EXPECTED_VERSION"
           for attempt in 1 2 3 4 5 6; do
-            got="$(npm view @qontinui/design-tokens version 2>/dev/null || true)"
+            got="$(npm view "@qontinui/design-tokens@$want" version 2>/dev/null || true)"
             if [ "$got" = "$want" ]; then
               echo "npm serves @qontinui/design-tokens@$got"
               exit 0
@@ -95,5 +104,5 @@ jobs:
             echo "attempt $attempt: npm serves '$got', want '$want'; retrying"
             sleep 20
           done
-          echo "::error::npm view @qontinui/design-tokens version returned '$got', expected '$want'"
+          echo "::error::npm view @qontinui/design-tokens@$want version returned '$got', expected '$want'"
           exit 1
